@@ -1,0 +1,99 @@
+<h1 id="-p-style-text-align-center-reemerging-the-russian-empire-p-"><p style="text-align: center;"> Reemerging the Russian Empire </p></h1>
+<p style="text-align: center;"> <a href = https://inst.eecs.berkeley.edu/~cs194-26/fa20/hw/proj1/> CS194-26 Proj #1 </a>: Colorizing the <a href = https://www.loc.gov/collections/prokudin-gorskii/> Prokudin-Gorskii </a> photo collection, Ken Guan </p>
+
+<p>&nbsp;</p>
+<h2 id="background">Background</h2>
+<p>Can you produce colored photography with only a black-and-white camera? As impossible as it sounds, Sergei Mikhailovich Prokudin-Gorskii (1863-1944), a man of genius, was able to produced thousands of &quot;colored&quot; pictures of the Russian empire by recording his photos in three different exposures: blue, green and red. With the technologies today, we can digitally combine the three exposures to gain a view of the old Russian empire. Below are two examples of Prokudin-Gorskii&#39;s photos, each with the three exposures stacked together.</p>
+<p><img src="./data/cathedral.jpg" width=400 align='top'> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <img src="./data/emir.jpg" width=400 align='top'></p>
+<p>Left: General view of the [Nikolaevskii] Cathedral from southwest. Mozhaisk</p>
+<p>Right: Emir of Bukhara. Bukhara</p>
+<p>&nbsp;</p>
+<h2 id="aligning-small-images-brute-force-search">Aligning Small Images: Brute-Force search</h2>
+<p>Unfortunately, recreating the photos weren&#39;t as easy as one would imagine. Turns out the exposures weren&#39;t perfectly aligned due to technical difficulties at the time of capture. Take the photo of the Cathedral as an example; simply stacking the three exposures would give an image of wild color misalignment:</p>
+<p><img src="./out_images/cathedralexample.jpg" width=400 align='top'></p>
+<p>&nbsp;</p>
+<p>Having the raw pixels, however, we can align the three channels by rolling them to a desired direction. We optimize the alignment between two channels by either minimizing the SSD or maximizing the NCC, which are given as follows (Let the two channels be A, B respectively):</p>
+<p><img src="https://latex.codecogs.com/svg.latex?\Large&space;SSD=\sum _{i,j} (A - B)_{ij}^2" title="\Large SSD=\sum _{i,j} (A - B)_{ij}^2" /></p>
+<p>&nbsp;</p>
+<p><img src="https://latex.codecogs.com/svg.latex?\Large&space;NCC=\frac{\sum _{i,j} A_{ij} * B_{ij}}{|A||B|}" title="\Large NCC=\frac{\sum _{i,j} A_{ij} * B_{ij}}{|A||B|}" /></p>
+<p>Given the small image size, we brute-force search all possible alignment shifts within a small window (15 pixels each direction) to find the best shift. It turns out that these two metrics yield identical images on most inputs. The resulting image is much better than the original stacked image:</p>
+<p><img src="./out_images/cathedral.jpg" width=400 align='top'></p>
+<p>&nbsp;</p>
+<h2 id="aligning-large-images-image-pyramid">Aligning Large Images: Image Pyramid</h2>
+<p>The brute-force method inevitably fails on the larger images because the &quot;small window&quot; we used earlier proved to be too small, while using a larger window is too expensive to search. Trying the 15-pixel shifting window on the Emir image gives the following:</p>
+<p><img src="./out_images/emirexample.jpg" width=400 align='top'></p>
+<p>&nbsp;</p>
+<p>Unsatisfactory. In order to realize larger channel shifts without searching too big a window, we employ the image pyramid approach, where we measure alignment shifts on different levels of shrinked image, making larger shifts on the smaller sizes while fine-tuning on the bigger. Using 3 levels of halving accuracy and the same 15-pixel shifting window, we are able to make a maximum of (8 + 4 + 2 + 1) * 15 = 225 pixels of shifting each direction, with only 4 times the cost.</p>
+<p>The result of the image pyramid algorithm on the Emir image is the following:</p>
+<p><img src="./out_images/emir.jpg" width=400 align='top'></p>
+<p>&nbsp;</p>
+<p>Great! We can see his face much more clearly.</p>
+<p>&nbsp;</p>
+<h2 id="-bells-and-whistles-cropping-off-borders">(Bells and Whistles) Cropping off borders</h2>
+<p>All of the photos in the collection comes with some white borders followed by some black borders. We neglected the borders in the alignment process by only comparing the inner 2/3 of the image (each direction), but it becomes unreasonable to crop out only the inner 2/3 of the image just to get rid of the borders. Instead, given the pattern of the borders, we use a simple algorithm. </p>
+<p>First, we removes all rows and columns near each edge that has a high average value (&gt;0.9) in at least one of the three channels. This gets rid of the white borders. Next, we remove all rows and columns near each edge of the remaining image that has a low average value (&lt;0.2) in at least one of the three channels. This method minimizes cropping on the real image and crops out the edges on most images.</p>
+<p>To combat the case where the border between the black and white portions are not exactly horizontal/vertical, we crop an additional constant number of pixels per side between the two processes so the black borders are not &quot;shielded&quot; by the sloped zone, where the average value sits in the middle of the two thresholds.</p>
+<p>This method works well on most images where the borders are clean. There were a few cases where the borders are contaminated with additional markings or unexplained noise. An edge-detection approach could potentially handle these cases better.</p>
+<p>A before -&gt; after comparison on some images:</p>
+<p><img src="./out_images/three_generations.jpg" width=400 align='top'> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <img src="./out_images/three_generations_cropped.jpg" width=400 align='top'></p>
+<p>&nbsp;</p>
+<h2 id="-bells-and-whistles-cropping-off-shifted-colors">(Bells and Whistles) Cropping off shifted colors</h2>
+<p>Finally, we also see some unpleasant colored strips around the cropped images. Some of these are produced by our shifting process (we used np.roll which wraps around) while others are due to noise in the original images. We only remove the ones produced by shifting by further cropping each image by the amount of shifting applied. The result is like the following:</p>
+<p><img src="./out_images/three_generations_cropped.jpg" width=400 align='top'> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <img src="./out_images/three_generations_color_cropped.jpg" width=400 align='top'></p>
+<p>&nbsp;</p>
+<h2 id="gallery">Gallery</h2>
+<p>(All shifts are aligned to the green channel in (x, y) format, direction defined as in np.roll)</p>
+<p><img src="./out_images/cathedral_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 1, 7; b: -2, -5</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/monastery_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 1, 6; b: -2, 3</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/tobolsk_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 1, 4; b: -3, -3</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/castle_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 2, 64; b: -2, -34</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/emir_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 18, 58; b: -24, -48</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/harvesters_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: -2, 64; b: -16, -58</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/icon_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 6, 48; b: -18, -42</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/lady_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 4, 62; b: -8, -56</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/melons_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 4, 96; b: -10, -82</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/onion_church_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 10, 58; b: -26, -52</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/self_portrait_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 8, 98; b: -30, -78</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/three_generations_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: -2, 58; b: -14, -52</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/train_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 26, 44; b: -6, -42</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/workshop_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: -10, 52; b: 0, -54</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/collection1_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 2, 48; b: -6, -32</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/collection2_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 6, 80; b: -6, -8</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/collection3_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: -16, 106; b: 10, -34</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/collection4_color_cropped.jpg" width=400 align='top'>
+SHIFT: r: 26, 90; b: -28, -20</p>
+<p>&nbsp;</p>
