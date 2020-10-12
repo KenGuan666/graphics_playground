@@ -1,0 +1,76 @@
+<h1 id="-p-style-text-align-center-face-morphing-p-"><p style="text-align: center;"> Face Morphing </p></h1>
+<p style="text-align: center;"> <a href = https://inst.eecs.berkeley.edu/~cs194-26/fa20/hw/proj3/> CS194-26 Proj #3 </a>: Face Morphing, Ken Guan </p>
+
+<p>&nbsp;</p>
+<h2 id="background">Background</h2>
+<p>Do you know that a smooth face morphing video requires no complicated technique to make but a sequence of linear transformations? This project demonstrates just that. Don&#39;t overpay for fancy softwares again! Each section below corresponds to a task in the original project (linked above).</p>
+<p>&nbsp;</p>
+<h2 id="the-mid-way-face">The Mid-Way Face</h2>
+<p>The morph video from one face to another is really a sequence of images, each morphed at a certain ratio. At each ratio, we find the correspondingly weighted average of pre-defined matching feature points as our base shape, and warp each image into it. During the warping process, we split the image into triangles formed by the feature points, and linearly transform each triangle into the warped shape.</p>
+<p><img src="./aligned_ken.jpg" width=200 align='top'>
+<img src="./morph_sequence/morph 22.jpg" width=200 align='top'>
+<img src="./aligned_george_small.jpg" width=200 align='top'></p>
+<p>You can see that our hair styles are quite different, so the transition there is more of a fade-out than a morph.</p>
+<p>&nbsp;</p>
+<h2 id="the-morph">The Morph</h2>
+<p>Here is the full morph video! <a href="https://youtu.be/CSMa5ikqa2Y">https://youtu.be/CSMa5ikqa2Y</a></p>
+<p>&nbsp;</p>
+<h2 id="the-mean-face">The Mean Face</h2>
+<p>I used the Danish face database and picked only the full frontal faces with neutral expression. I calculated their average shape and warped all faces into it. Here are the results:</p>
+<p style="text-align: center;">
+<img src="./out_images/mean_face.jpg" width=200 align='top'>
+</p>
+
+<p style="text-align: center;">
+<img src="./imm_face_db/01-1m.jpg" width=200 align='top'>
+<img src="./out_images/01-1mwarped.jpg" width=200 align='top'>
+</p>
+
+<p style="text-align: center;">
+<img src="./imm_face_db/05-1m.jpg" width=200 align='top'>
+<img src="./out_images/05-1mwarped.jpg" width=200 align='top'>
+</p>
+
+<p style="text-align: center;">
+<img src="./imm_face_db/06-1m.jpg" width=200 align='top'>
+<img src="./out_images/06-1mwarped.jpg" width=200 align='top'>
+</p>
+
+<p style="text-align: center;">
+<img src="./imm_face_db/07-1m.jpg" width=200 align='top'>
+<img src="./out_images/07-1mwarped.jpg" width=200 align='top'>
+</p>
+
+<p>Top is the mean face. Rest are some examples of warped faces. We can see that there are a decent amount of variances in the faces, and each face looks changed quite a bit.</p>
+<p>Things got weirder when my face is warped to the mean. I don&#39;t think I&#39;ll blend into Danish people well after all.</p>
+<p>Me into the Danish mean</p>
+<p style="text-align: center;">
+<img src="./resized_ken2.jpg" width=200 align='top'>
+<img src="./out_images/me_to_dane.jpg" width=200 align='top'>
+<img src="./out_images/mean_face.jpg" width=200 align='top'>
+</p>
+
+<p>Danish mean into me</p>
+<p style="text-align: center;">
+<img src="./out_images/mean_face.jpg" width=200 align='top'>
+<img src="./out_images/dane_to_me.jpg" width=200 align='top'>
+<img src="./resized_ken2.jpg" width=200 align='top'>
+</p>
+
+<p>Me more Danish</p>
+<p style="text-align: center;">
+<img src="./resized_ken2.jpg" width=200 align='top'>
+<img src="./out_images/more_dane.jpg" width=200 align='top'>
+<img src="./out_images/mean_face.jpg" width=200 align='top'>
+</p>
+
+<p>Me less Danish</p>
+<p style="text-align: center;">
+<img src="./resized_ken2.jpg" width=200 align='top'>
+<img src="./out_images/less_dane.jpg" width=200 align='top'>
+<img src="./out_images/mean_face.jpg" width=200 align='top'>
+</p>
+
+<p>&nbsp;</p>
+<h2 id="bells-whistles">Bells &amp; Whistles</h2>
+<p>A video of me and my fellows!</p>
