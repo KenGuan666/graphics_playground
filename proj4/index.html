@@ -1,0 +1,83 @@
+<h1 id="-p-style-text-align-center-facial-keypoint-detection-with-neural-networks-p-"><p style="text-align: center;"> Facial Keypoint Detection with Neural Networks </p></h1>
+<p style="text-align: center;"> <a href = https://inst.eecs.berkeley.edu/~cs194-26/fa20/hw/proj4/> CS194-26 Proj #4 </a>: Face Morphing, Ken Guan </p>
+
+<p>&nbsp;</p>
+<h2 id="background">Background</h2>
+<p>In project 3, we implemented a smooth, beautiful face morphing algorithm that works on almost any two faces. However, each face image requires a tedious process of manually labelling facial keypoints. In this project, we automate this process with CNNs.</p>
+<p>&nbsp;</p>
+<h2 id="nose-tip-detection">Nose Tip Detection</h2>
+<p>To get a toy model, we first train a network that predicts the person&#39;s nose tip position given a photograph. This network takes the down-sampled 80*60 grayscale images as input and outputs the (x, y) coordinate prediction. It has three Convolutional Layers followed by three Fully Connected Layers.</p>
+<p>Some sampled inputs from the Dataset. Red points are the ground truth points.</p>
+<p><img src="./out_images/part1/0ground_truth.png" width=300 align='top'>
+<img src="./out_images/part1/20ground_truth.png" width=300 align='top'>
+<img src="./out_images/part1/30ground_truth.png" width=300 align='top'></p>
+<p>&nbsp;</p>
+<p>The network takes about 20 seconds to train locally for 25 epochs with batch size of 1. Here are the loss graphs:</p>
+<p>Left: Train Loss</p>
+<p>Right: Validation Loss</p>
+<p><img src="./out_images/part1/train loss plt.png" width=300 align='top'>
+<img src="./out_images/part1/val loss plt.png" width=300 align='top'></p>
+<p>&nbsp;</p>
+<p>Note that the MSE losses are calculated in the unit of actual pixels on the image. The scale may look different if we calculate loss in the [0, 1] ratio space instead.</p>
+<p>The error graph indicates (roughly) that the average error is between 3 to 4 pixels for the whole dataset. In reality, the error is skewed by a few extreme outliers. For the following, the left and middle photo comes from training set, while the right photo comes from validation set. Red points are ground-truth while yellow are predictions.</p>
+<p><img src="./out_images/part1/0train nosetip net comparison.png" width=300 align='top'>
+<img src="./out_images/part1/20train nosetip net comparison.png" width=300 align='top'>
+<img src="./out_images/part1/0val nosetip net comparison.png" width=300 align='top'></p>
+<p>&nbsp;</p>
+<p>The following are some outliers: </p>
+<p><img src="./out_images/part1/80train nosetip net comparison.png" width=300 align='top'>
+<img src="./out_images/part1/110train nosetip net comparison.png" width=300 align='top'>
+<img src="./out_images/part1/15val nosetip net comparison.png" width=300 align='top'></p>
+<p>&nbsp;</p>
+<p>The majority of the outliers are tilted faces with the ground-truth nose tip quite far from the geometrical center of the 2-D face. We see that the network&#39;s predictions tend to be too close to the center.</p>
+<p>&nbsp;</p>
+<h2 id="full-facial-keypoints-detection">Full Facial Keypoints Detection</h2>
+<p>This model is more sophisticated than the toy model above because it now predicts 58 different facial keypoints. For this reason, we performed data augmentation, used larger input images and a deeper architecture. We used photos of size 240*180 and applied 5 Convolutional Layers before 2 Fully Connected Layers.</p>
+<p>Some sampled inputs from the Dataset. Some are shifted horizontally. Some are slightly rotated. Red points are the ground-truth labels.</p>
+<p><img src="./out_images/part2/0augmented ground_truth.png" width=300 align='top'>
+<img src="./out_images/part2/500augmented ground_truth.png" width=300 align='top'>
+<img src="./out_images/part2/780augmented ground_truth.png" width=300 align='top'></p>
+<p><img src="./out_images/part2/1560augmented ground_truth.png" width=300 align='top'>
+<img src="./out_images/part2/1820augmented ground_truth.png" width=300 align='top'></p>
+<p>&nbsp;</p>
+<p>The network takes a little more time to train locally for 25 epochs with batch size of 1. It is considerably slower but still managable. Here are the loss graphs:</p>
+<p>Left: Train Loss</p>
+<p>Right: Validation Loss</p>
+<p><img src="./out_images/part2/train loss plt.png" width=300 align='top'>
+<img src="./out_images/part2/val loss plt.png" width=300 align='top'></p>
+<p>&nbsp;
+(Aside: the loss graphs may indicate that the learning rate is a bit too high. However I wasn&#39;t able to get better results by tuning down learning rate.)</p>
+<p>Similar to above, the MSE losses are calculated in the unit of actual pixels on the image. The scale may look different if we calculate loss in the [0, 1] ratio space instead.</p>
+<p>For the following, the left and middle photo comes from training set, while the right photo comes from validation set. Red points are ground-truth while yellow are predictions.</p>
+<p><img src="./out_images/part2/150train all feature net comparison.png" width=300 align='top'>
+<img src="./out_images/part2/1530train all feature net comparison.png" width=300 align='top'>
+<img src="./out_images/part2/900train all feature net comparison.png" width=300 align='top'></p>
+<p>&nbsp;</p>
+<p>The following are some outliers: </p>
+<p><img src="./out_images/part2/0train all feature net comparison.png" width=300 align='top'>
+<img src="./out_images/part2/1260train all feature net comparison.png" width=300 align='top'>
+<img src="./out_images/part2/600train all feature net comparison.png" width=300 align='top'></p>
+<p>&nbsp;</p>
+<p>Many of the outliers are from the augmented inputs which are shifted from the center. The predictions seem to still stick to the center in some cases. Also, the predicted face outline consistently tilts toward the right. This could be due to that more images were rotated to the right during augmentation.</p>
+<p>&nbsp;</p>
+<p>A visualization of first-layer kernels:</p>
+<p><img src="./out_images/part2/p2l1 filters.png" width=1000 align='top'></p>
+<p>The other layers have too many kernels, so they are not visualized here.</p>
+<p>&nbsp;</p>
+<h2 id="train-with-larger-dataset">Train with Larger Dataset</h2>
+<p>For this part, we used the ResNet18 Architecture from Torch&#39;s library. We changed the input dimension to match 224*224 and the output dimension to predict 68 pairs of coordinates. Here&#39;s an image (from the internet) explaining its architechture:</p>
+<p><img src="./out_images/part2/ResNet-18-Architecture.png" width=500 align='top'></p>
+<p>&nbsp;</p>
+<p>Kaggle Username: Ken Guan. Score: 9.93902</p>
+<p>A few images from the test set:</p>
+<p><img src="./out_images/part3/testset1.png" width=300 align='top'>
+<img src="./out_images/part3/testset2.png" width=300 align='top'>
+<img src="./out_images/part3/testset3.png" width=300 align='top'></p>
+<p>&nbsp;</p>
+<p>Loss plot; left is training loss, right is validation loss:</p>
+<p><img src="./out_images/part3/trainloss.png" width=300 align='top'>
+<img src="./out_images/part3/valloss.png" width=300 align='top'></p>
+<p>&nbsp;</p>
+<p>A visualization of first-layer kernels:</p>
+<p>&nbsp;</p>
+<p><img src="./out_images/part2/p3 filters.png" width=1000 align='top'></p>
