@@ -1,0 +1,93 @@
+<h1 id="-p-style-text-align-center-panorama-stitching-p-"><p style="text-align: center;"> Panorama Stitching </p></h1>
+<p style="text-align: center;"> <a href = https://inst.eecs.berkeley.edu/~cs194-26/fa20/hw/proj5/> CS194-26 Proj #5 </a>: Stitching Photo Mosaics, Ken Guan </p>
+
+<p>&nbsp;</p>
+<h2 id="background">Background</h2>
+<p>In project 5, we will implement an algorithm to stitch-up continuous images. As the first part, we try to warp photos taken at different angles on to the same plane.</p>
+<p>&nbsp;</p>
+<h2 id="shoot-the-pictures">Shoot the Pictures</h2>
+<p>For this assignment, I picked the boardgame corner of my living room, which has lots of distinct sharp corners that are great for marking pairs. I labeled the images with 16 corresponding points. Here are the labeled images:</p>
+<p><img src="./desk_1.jpg" width=300 align='top'>
+<img src="./desk_2.jpg" width=300 align='top'>
+<img src="./desk_3.jpg" width=300 align='top'></p>
+<p>&nbsp;</p>
+<h2 id="recover-homographies">Recover Homographies</h2>
+<p>I labeled the images with 16 corresponding points. Here are the labeled images:</p>
+<p><img src="./out_images/im1_pts.png" width=300 align='top'>
+<img src="./out_images/im2_pts.png" width=300 align='top'>
+<img src="./out_images/im3_pts.png" width=300 align='top'></p>
+<p>I then recovered the least-square homography from image 2 and 3 to image 1.</p>
+<p>&nbsp;</p>
+<h2 id="warp-the-images">Warp the Images</h2>
+<p>I warped image 2 and 3 to image 1 using inverse warping. Both images are warped into the set of coordinates that would overlap with image 1 well.</p>
+<p><img src="./desk_1.jpg" width=300 align='top'>
+<img src="./out_images/2to1.jpg" width=300 align='top'>
+<img src="./out_images/3to1.jpg" width=300 align='top'></p>
+<p>Left: target image; middle &amp; right: warped image 2, 3</p>
+<p>&nbsp;</p>
+<h2 id="image-rectification">Image Rectification</h2>
+<p>I tested the warp function by rectifying the blue poker case into a fat square at the top left corner. Here is what I got:</p>
+<p><img src="./out_images/square.jpg" width=300 align='top'></p>
+<p>Another example of rectification:</p>
+<p><img src="./trapezoid.jpg" width=300 align='top'>
+<img src="./out_images/square_building.jpg" width=300 align='top'></p>
+<p>I did not worry much about cropping or expanding the edges here because I&#39;m very excited for the next part!</p>
+<p>&nbsp;</p>
+<h2 id="mosaic-blending">Mosaic Blending</h2>
+<p>If we warp all images on to the same plane and naively stack them, we get something like:</p>
+<p><img src="./out_images/naive collage.jpg" width=800 align='top'></p>
+<p>&nbsp;</p>
+<p>Note how the overlapping parts have much higher brightness. To mitigate this, I tried to take the maximum value at each spot insteading of adding them up:</p>
+<p><img src="./out_images/naive stack.jpg" width=800 align='top'></p>
+<p>&nbsp;</p>
+<p>It&#39;s easy to notice that color and brightness still changes a bit at the edge of overlap. Also my finger was caught at the edge of the middle image and made a ghost apparence right at the overlap! We have to erase these effects. I used a mask that falls off gradually toward one side.</p>
+<p><img src="./out_images/blend stack.jpg" width=800 align='top'></p>
+<p>&nbsp;</p>
+<p>Now the edge effects are all eliminated! Yay!</p>
+<p>A few other blends:</p>
+<p><img src="./kitchen_2.jpg" width=400 align='top'>
+&nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; &nbsp;
+<img src="./kitchen_1.jpg" width=400 align='top'></p>
+<p><img src="./out_images/blend_stack_kitchen.jpg" width=400 align='top'></p>
+<p>&nbsp;</p>
+<p><img src="./street_2.jpg" width=400 align='top'>
+&nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; &nbsp;
+<img src="./street_1.jpg" width=400 align='top'></p>
+<p><img src="./out_images/blend_stack_street.jpg" width=400 align='top'></p>
+<p>Looks like I forgot to turn off the fade off towards the left. Oof. But these images do show that the morphs and blending are working (except for the light beam on the street images. I don&#39;t have a good explanation to this especially given everything else on the image works very well.)</p>
+<p>&nbsp;</p>
+<h2 id="feature-detection">Feature Detection</h2>
+<p>Now we switch over to automatically detecting features from the images. This approach should work better because hand-marked features are far more prone to errors. I used ANMS on the Harris corners to find the top 500 features for each image.</p>
+<p><img src="./out_images/im1_anms500.png" width=400 align='top'>
+&nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; &nbsp;
+<img src="./out_images/im2_anms500.png" width=400 align='top'></p>
+<p>&nbsp;</p>
+<p>We then define a &quot;descriptor&quot; for each point by extracting a blurred patch around each point. We match points by these descriptors. Specifically, we accept matches such that the error of the best match is significantly lower than that of the second best match. </p>
+<p><img src="./out_images/im1_matching_pts.png" width=400 align='top'>
+&nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; &nbsp;
+<img src="./out_images/im2_matching_pts.png" width=400 align='top'></p>
+<p>&nbsp;</p>
+<p>There is one point on the black cloth on the chair that isn&#39;t a great match. From this point, I first tried using these points directly to form a mosaic. I then used the RANSAC algorithm to select the &quot;best&quot; set of matches to use. Here are the results:</p>
+<p><img src="./out_images/LSE_wo_ransac.png" width=400 align='top'>
+&nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; &nbsp;
+<img src="./ransac.png" width=400 align='top'></p>
+<p>Left: Homography without RANSAC. Right Homography with RANSAC.</p>
+<p>&nbsp;</p>
+<p>Compare these images side by side and we realize that RANSAC does give the more robust result. Now let&#39;s compare the RANSAC results against the hand-marked stitch results for the other two images:</p>
+<p><img src="./out_images/blend_stack_kitchen.jpg" width=400 align='top'>
+&nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; &nbsp;
+<img src="./ransac_kitchen.png" width=400 align='top'></p>
+<p><img src="./out_images/blend_stack_street.jpg" width=400 align='top'>
+&nbsp; &nbsp; &nbsp;
+&nbsp; &nbsp; &nbsp;
+<img src="./ransac_street.png" width=400 align='top'></p>
+<p>We can see that the image qualities are very close, but the automatically detected key points do slightly better on the street image.</p>
+<h2 id="lessons-learned">Lessons Learned</h2>
+<p>I actually find the correspondence between image data and np matrices very interesting. It has been intimidating to work with image data but you could display them for debugging with matlibplot very easily. While working with masks and filters, you could also easy construct them from scratch in np array form. I have also gained lots of experience with some np features in this project. (For example, I haven&#39;t seen np._r until Google told me that it was exactly what I needed!)</p>
+<p>It also became obvious to me how manual operations are highly prone to error. Each hand-marked mosaic took me at least 5 attempts of marking the feature points before getting a reasonable blend!</p>
